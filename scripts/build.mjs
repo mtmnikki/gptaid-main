@@ -4,6 +4,8 @@ import stylePlugin from 'esbuild-style-plugin'
 import autoprefixer from 'autoprefixer'
 import tailwindcss from 'tailwindcss'
 import path from 'node:path'
+import fs from 'node:fs'
+import 'dotenv/config'
 
 // Load .env into process.env for dev/build
 import 'dotenv/config'
@@ -50,15 +52,24 @@ const esbuildOpts = {
   alias: { '@': path.resolve(process.cwd(), 'src') },
   // Keep index.html simple; we’ll serve dist/
 }
-
+function copyIndex() {                // <-- add this helper
+  try {
+    fs.copyFileSync('index.html', 'dist/index.html');
+    console.log('Copied index.html -> dist/index.html');
+  } catch (e) {
+    console.error('Failed to copy index.html:', e);
+  }
+}
 // Build or dev-serve
 if (isProd) {
   await esbuild.build(esbuildOpts)
+    copyIndex()
   process.exit(0)
 }
 
 const ctx = await esbuild.context(esbuildOpts)
 await ctx.watch()
+copyIndex()     
 const { port, host } = await ctx.serve({
   servedir: 'dist',
 })
